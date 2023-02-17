@@ -4,8 +4,9 @@ pip install deep-translator
 pip install gTTS
 pip install pydub
 pip install librosa
-pip install pysimplegui
+pip install customtkinter
 
 
 https://pypi.org/project/youtube-transcript-api/
 https://stackoverflow.com/questions/66707266/unable-to-use-moviepy-library
+https://hub.packtpub.com/introducing-spleeter-tensorflow-python-library-extracts-voice-sound-from-music/

@@ -9,7 +9,6 @@ import os
 import librosa
 from scipy.io import wavfile
 
-
 # Read config files
 config = configparser.ConfigParser(allow_no_value=True)
 config.read('config.ini')
@@ -25,7 +24,8 @@ translateService = cloudConfig['CLOUD']['translate_service'].lower()
 videoFilepath = config['SETTINGS']['original_video_file_path'].lower()
 audioFilepath = config['SETTINGS']['orginal_audio_file_path'].lower()
 audioFileExists = config.getboolean('SETTINGS','audio_file_exists')
-languageNums = batchConfig['SETTINGS']['enabled_languages'].replace(' ','').split(',')
+languageNums = batchConfig['BATCH']['enabled_languages'].replace(' ','').split(',')
+originalLang = config['SETTINGS']['original_language']
 
 batchSettings = {}
 for num in languageNums:
@@ -35,7 +35,6 @@ for num in languageNums:
         'synth_voice_name': batchConfig[f'LANGUAGE-{num}']['synth_voice_name'],
         'synth_voice_gender': batchConfig[f'LANGUAGE-{num}']['synth_voice_gender']
     }
-
 
 # Get audio from video file
 if not audioFileExists:
@@ -114,7 +113,7 @@ def googleSTT():
             r.adjust_for_ambient_noise(source)
             audio = r.record(source)
         try:
-            result = r.recognize_google(audio)
+            result = r.recognize_google(audio,language=originalLang)
             with open('splitted/text/'+str(i)+'-text.txt','a', encoding='utf8') as f:
                 f.write(result)
         except sr.UnknownValueError:
