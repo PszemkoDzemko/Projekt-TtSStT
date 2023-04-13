@@ -18,7 +18,7 @@ langSettings = {}
 originalLang = 'en-US'
 filePath = ''
 ytLink = ''
-
+# dodałem komentarz
 app = customtkinter.CTk()
 app.geometry("600x430")
 app.title("TTSSTT")
