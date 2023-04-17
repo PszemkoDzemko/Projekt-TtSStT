@@ -106,14 +106,14 @@ def googleSTT():
     if countTextFile>0:
         print("There are files in spilitted/text directory")
         return
-    if countAudioFile<0:
+    if countAudioFile<=0:
         multipleSplit(1)
     for i in range(countAudioFile):
         with sr.AudioFile("splitted/audio/"+str(i)+"-audio.wav") as source:
-            r.adjust_for_ambient_noise(source)
+            r.adjust_for_ambient_noise(source) 
             audio = r.record(source)
         try:
-            result = r.recognize_google(audio,language=originalLang)
+            result = r.recognize_google(audio,language='en')
             with open('splitted/text/'+str(i)+'-text.txt','a', encoding='utf8') as f:
                 f.write(result)
         except sr.UnknownValueError:
@@ -132,7 +132,7 @@ def googleTranslate(languageBatchDict):
         for path in os.listdir(r'splitted/translated'):
             if os.path.isfile(os.path.join(r'splitted/translated',path)):
                 countTranslatedFile += 1
-        if countTextFile<0:
+        if countTextFile<=0:
             print('No file to translate')
             return
         if countTranslatedFile>0:
@@ -153,8 +153,12 @@ def googleTranslate(languageBatchDict):
 # Text to speech Google
 def googleTTS(languageBatchDict):
     if sttService == 'google':
+        countAudioFile = 0
         countTranslatedFile = 0
         countNewAudioFile = 0 
+        for path in os.listdir(r'splitted/audio'):
+            if os.path.isfile(os.path.join(r'splitted/audio',path)):
+                countAudioFile += 1
         for path in os.listdir(r'splitted/translated'):
             if os.path.isfile(os.path.join(r'splitted/translated',path)):
                 countTranslatedFile += 1
@@ -167,7 +171,7 @@ def googleTTS(languageBatchDict):
         if countNewAudioFile>0:
             print('There are files in spilitted/newAudio directory')
             return
-        for i in range(countTranslatedFile):
+        for i in range(countAudioFile):
             for langNum, langData in languageBatchDict.items():
                 with open('splitted/translated/'+str(i)+'-text-'+langData['translation_target_language']+'.txt','r', encoding='utf-8') as f:
                     file = f.readlines()
