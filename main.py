@@ -30,7 +30,27 @@ app = customtkinter.CTk()
 app.geometry("600x430")
 app.title("TTSSTT")
 
-def button_function():
+# Start function 
+def startBtn():
+    print(serviceSTT)
+    print(serviceTranslate)
+    print(serviceTTS)
+    if langSettings == {}:
+        print('Brak języka')
+        return
+    if filePath == '' and ytLink == '':
+        print('Brak linku/sciezki')
+        return
+    print(serviceSTT)
+    if serviceSTT == '':
+        print('brak stt')
+        return
+    if serviceTranslate == '':
+        print('brak translate')
+        return
+    if serviceTTS == '':
+        print('brak tts')
+        return
     print('Button pressed')
     print(langSettings)
     print(originalLang)
@@ -46,8 +66,9 @@ def chooseOriginalLang(choice):
 # Select filepath
 def selectFile():
     global filePath
-    filePath = fd.askopenfile()
-    entryFilePath.insert(-1,filePath.name)
+    fullFilePath = fd.askopenfile()
+    filePath = fullFilePath.name
+    entryFilePath.insert(-1,fullFilePath.name)
 # Select YT link
 def takeYTLink():
     global ytLink
@@ -199,7 +220,12 @@ class CloudConfig(customtkinter.CTkToplevel):
         self.radioBtnTTSGoogle.grid(row=2,column=1)
         self.radioBtnTTSAzure.grid(row=2,column=2)
         self.radioBtnTTSGoogleCloud.grid(row=2,column=3)
-        
+
+        # Add input fields for cloud config
+        # Google Cloud platform project ID
+        # Azure API key 
+        # Azure region
+        # Add button to accept and close window
 
 
 
@@ -215,9 +241,14 @@ buttonCloudConfig = customtkinter.CTkButton(master=app, text="Cloud Config", com
 buttonCloudConfig.grid(row=6,column=3)
 
 
-buttonStart = customtkinter.CTkButton(master=app, text="Start", command=button_function)
-buttonStart.grid(row=7,column=3)
+# Add if in start button check that all cloud services are selected
+# Add progress bar 
+# Split STT.py to seperate files like STT TTS Translate or even more 
+# Check DeepL for translations and AssembleAI for Speech to Text
 
+
+buttonStart = customtkinter.CTkButton(master=app, text="Start", command=startBtn)
+buttonStart.grid(row=7,column=3)
 
 
 app.mainloop()
