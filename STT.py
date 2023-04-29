@@ -63,7 +63,7 @@ def multipleSplit(minPerSplit):
         singleSplit(i, i+minPerSplit, splitFileN)
         if i == totalMins - minPerSplit:
             print('All splited successfully')
-            return
+            
 
 # Marge audio files into 1 file
 def margeAudio(languageBatchDict):
