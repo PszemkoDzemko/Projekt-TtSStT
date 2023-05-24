@@ -4,3 +4,5 @@
 /newAudioFastpl.wav
 /splitted
 /Info.txt
+.conda
+__pycache__

@@ -1,7 +1,14 @@
 import tkinter
 import configparser
 import customtkinter
+import pathlib
+import fileHelper
+import newSTT
+import Translate
+import TTS
 from tkinter import filedialog as fd
+from pydub import AudioSegment
+from threading import Thread
 
 customtkinter.set_appearance_mode("System")
 customtkinter.set_default_color_theme("green")
@@ -18,12 +25,14 @@ for i in range(int(languageNums)):
     }
 langSettings = {}
 originalLang = 'en-US'
-filePath = ''
+orgFilePath = ''
 ytLink = ''
-serviceSTT = ''
-serviceTranslate = ''
-serviceTTS = ''
-
+serviceSTT = 'google'
+serviceTranslate = 'google'
+serviceTTS = 'google'
+googleCloudID = ''
+azureAPIKey = ''
+azureRegion = ''
 
 # Custom tinker inicialization
 app = customtkinter.CTk()
@@ -32,16 +41,23 @@ app.title("TTSSTT")
 
 # Start function 
 def startBtn():
+    print('Button pressed')
+    print(langSettings)
+    print(originalLang)
+    print(orgFilePath)
+    print(ytLink)
     print(serviceSTT)
     print(serviceTranslate)
     print(serviceTTS)
+    print(googleCloudID)
+    print(azureAPIKey)
+    print(azureRegion)
     if langSettings == {}:
         print('Brak języka')
         return
-    if filePath == '' and ytLink == '':
+    if orgFilePath == '' and ytLink == '':
         print('Brak linku/sciezki')
         return
-    print(serviceSTT)
     if serviceSTT == '':
         print('brak stt')
         return
@@ -51,11 +67,65 @@ def startBtn():
     if serviceTTS == '':
         print('brak tts')
         return
-    print('Button pressed')
-    print(langSettings)
-    print(originalLang)
-    print(filePath)
-    print(ytLink)
+    fileExtension = pathlib.Path(orgFilePath).suffix
+    print(fileExtension)
+    # If fileExtension == mp4 or av, and some more
+    # Run script to extract audio from video 
+    if orgFilePath != '':
+        if fileExtension != '.wav' and fileExtension != '.mp3':
+            print('jestem')
+            if fileHelper.audioFromVideo(orgFilePath):
+                audiofilePath = 'files/audio.wav'
+        else:
+            audiofilePath = orgFilePath
+        newAudio = AudioSegment.from_wav(audiofilePath)
+        duration = newAudio.duration_seconds
+    progressbar.set(0.2)
+    # If fileExtension is alredy mp3 wav
+    # Split audio to 1 min files when using google STT
+    if serviceSTT == 'google':
+        print(duration)
+        print(audiofilePath)
+        fileHelper.multipleSplit(1,duration,newAudio)
+        newSTT.googleSTT(originalLang)
+    if serviceSTT == 'azure':
+        if azureAPIKey != '' and azureRegion != '':
+            newSTT.azureSTT(originalLang, azureAPIKey)
+        else:
+            print("podaj klucz api oraz region")
+            return
+    if serviceSTT == 'google-cloud':
+        if googleCloudID != '':
+            newSTT.googleCloudSTT(originalLang,googleCloudID)
+        else: 
+            print("Podaj dane") 
+            return
+    progressbar.set(0.4)
+
+    #Translate
+    if serviceTranslate == 'google':
+        Translate.googleTranslate(langSettings,serviceSTT)
+    progressbar.set(0.6)
+    if serviceTranslate == 'azure':
+        if azureAPIKey != '' and azureRegion != '':
+            Translate.azureTranslate(langSettings,azureAPIKey)
+        else:
+            print("podaj klucz api oraz region")
+            return
+    if serviceTranslate == 'deepL':
+        Translate.deepLTranslate(langSettings)
+
+    #TTS
+    if serviceTTS == 'google':
+        TTS.googleTTS(langSettings,serviceSTT)
+    progressbar.set(0.8)
+    if serviceTTS == 'azure':
+        if azureAPIKey != '' and azureRegion != '':
+            TTS.azureTTS()
+        else:
+            print("podaj klucz api oraz region")
+            return
+    
 
 # Choose original language
 def chooseOriginalLang(choice):
@@ -65,9 +135,9 @@ def chooseOriginalLang(choice):
             originalLang = batchConfig[f'LANGUAGE-{lan}']['synth_language_code']
 # Select filepath
 def selectFile():
-    global filePath
+    global orgFilePath
     fullFilePath = fd.askopenfile()
-    filePath = fullFilePath.name
+    orgFilePath = fullFilePath.name
     entryFilePath.insert(-1,fullFilePath.name)
 # Select YT link
 def takeYTLink():
@@ -124,16 +194,16 @@ labelFile = customtkinter.CTkLabel(master=app, text="Wybierz plik źródłowy (w
 labelFile.grid(row=0,column=0)
 entryFilePath = customtkinter.CTkEntry(master=app ,placeholder_text='Wybierz ścieżkę',width=300)
 entryFilePath.grid(row=1,column=0)
-buttonFilePath = customtkinter.CTkButton(master=app, text="Wybierz", command=selectFile)
-buttonFilePath.grid(row=1,column=2)
+btnFilePath = customtkinter.CTkButton(master=app, text="Wybierz", command=selectFile)
+btnFilePath.grid(row=1,column=2)
 
 # Choose YT Video link
 labelYTLink = customtkinter.CTkLabel(master=app,text="Opcjonalnie podaj link do filmiku na Youtube.")
 labelYTLink.grid(row=2,column=0)
 entryYTLink = customtkinter.CTkEntry(master=app,placeholder_text='Podaj link do filmiku na YT',width=300)
 entryYTLink.grid(row=3,column=0)
-buttonYTLink = customtkinter.CTkButton(master=app, text="Zapisz", command=takeYTLink)
-buttonYTLink.grid(row=3,column=2)
+btnYTLink = customtkinter.CTkButton(master=app, text="Zapisz", command=takeYTLink)
+btnYTLink.grid(row=3,column=2)
 
 labelLangDef = customtkinter.CTkLabel(master=app,text="Wybierz oryginalny język:")
 labelLangDef.grid(row=4,column=0,pady=5)
@@ -151,28 +221,36 @@ scrollable_checkbox_frame = ScrollableCheckBoxFrame(master=app, width=200, comma
 scrollable_checkbox_frame.grid(row=6, column=0)
 
 
+progressbar = customtkinter.CTkProgressBar(app,width=500, height=15)
+progressbar.grid(row=7, columnspan=5)
+progressbar.set(0)
+
 # Cloud config window
 class CloudConfig(customtkinter.CTkToplevel):
-    global serviceSTT
-    global serviceTranslate
-    global serviceTTS
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.geometry("600x300")
+        self.geometry("600x400")
         self.title("Cloud Config")
         # Select STT service function
         def radioBtnSTTEvent():
+            global serviceSTT
             serviceSTT = lserviceSTT.get()
-            print("STT toggled, current value:", serviceSTT)
 
         def radioBtnTranslationEvent():
+            global serviceTranslate
             serviceTranslate = lserviceTranslate.get()
-            print("Translate toggled, current value:", serviceTranslate)
 
         def radioBtnTTSEvent():
+            global serviceTTS
             serviceTTS = lserviceTTS.get()
-            print("TTS toggled, current value:", serviceTTS)
 
+        def configConfirmBtn():
+            global googleCloudID
+            global azureAPIKey
+            global azureRegion
+            googleCloudID = self.entryGoogleProjectID.get()
+            azureAPIKey = self.entryAzureRegion.get()
+            azureRegion = self.entryAzureRegion.get()
 
         lserviceSTT = tkinter.StringVar(value='google')
         lserviceTranslate = tkinter.StringVar(value='google')
@@ -180,7 +258,7 @@ class CloudConfig(customtkinter.CTkToplevel):
         #self.labelSpacer.grid(row=1,column=1)
 
         # Frame for STT service option
-        self.radioBtnFrameSTT = customtkinter.CTkFrame(self)
+        self.radioBtnFrameSTT = customtkinter.CTkFrame(self, fg_color="transparent")
         # Radio button for STT service
         self.labelSTT = customtkinter.CTkLabel(self.radioBtnFrameSTT, text="Jaką usługę STT wybierasz?")
         self.radioBtnSTTGoogle = customtkinter.CTkRadioButton(self.radioBtnFrameSTT, text="Google", command=radioBtnSTTEvent, variable=lserviceSTT, value='google')
@@ -194,7 +272,7 @@ class CloudConfig(customtkinter.CTkToplevel):
         self.radioBtnSTTGoogleCloud.grid(row=2,column=3)
         
         # Frame for Translation
-        self.radioBtnFrameTranslation = customtkinter.CTkFrame(self)
+        self.radioBtnFrameTranslation = customtkinter.CTkFrame(self, fg_color="transparent")
         # Radio button for Translate service
         self.labelTranslate = customtkinter.CTkLabel(self.radioBtnFrameTranslation, text="Jaką usługę Translate wybierasz?")
         self.radioBtnTranslateGoogle = customtkinter.CTkRadioButton(self.radioBtnFrameTranslation, text="Google", command=radioBtnTranslationEvent, variable=lserviceTranslate, value='google')
@@ -208,7 +286,7 @@ class CloudConfig(customtkinter.CTkToplevel):
         self.radioBtnTranslateGoogleCloud.grid(row=2,column=3)
 
         # Frame for TTS
-        self.radioBtnFrameTTS = customtkinter.CTkFrame(self)
+        self.radioBtnFrameTTS = customtkinter.CTkFrame(self, fg_color="transparent")
         # Radio button for TTS service
         self.labelTTS = customtkinter.CTkLabel(self.radioBtnFrameTTS, text="Jaką usługę TTS wybierasz?")
         self.radioBtnTTSGoogle = customtkinter.CTkRadioButton(self.radioBtnFrameTTS, text="Google", command=radioBtnTTSEvent, variable=lserviceTTS, value='google')
@@ -221,34 +299,44 @@ class CloudConfig(customtkinter.CTkToplevel):
         self.radioBtnTTSAzure.grid(row=2,column=2)
         self.radioBtnTTSGoogleCloud.grid(row=2,column=3)
 
-        # Add input fields for cloud config
         # Google Cloud platform project ID
+        self.labelGoogleProjectID = customtkinter.CTkLabel(self, text="Podaj ID z platformy Google Cloud Project")
+        self.entryGoogleProjectID = customtkinter.CTkEntry(self, placeholder_text='Podaj Google Cloud ID',width=300)
+        self.labelGoogleProjectID.grid(row=5,column=1)
+        self.entryGoogleProjectID.grid(row=6,column=1)
         # Azure API key 
+        self.labelAzureAPI = customtkinter.CTkLabel(self, text="Podaj klucz API z platformy Azure")
+        self.entryAzureAPI = customtkinter.CTkEntry(self, placeholder_text='Podaj klucz Azure API',width=300)
+        self.labelAzureAPI.grid(row=7,column=1)
+        self.entryAzureAPI.grid(row=8,column=1)
         # Azure region
+        self.labelAzureRegion = customtkinter.CTkLabel(self, text="Podaj region z platformy Azure")
+        self.entryAzureRegion = customtkinter.CTkEntry(self, placeholder_text='Podaj region Azure',width=300)
+        self.labelAzureRegion.grid(row=9,column=1)
+        self.entryAzureRegion.grid(row=10,column=1)
         # Add button to accept and close window
-
+        self.confirmSettBtn = customtkinter.CTkButton(self, text="Zapisz", command=configConfirmBtn)
+        self.confirmSettBtn.grid(row=11,column=2)
 
 
 def openCloudConfig():
     global cloudConfig
+    global serviceSTT
     if cloudConfig is None or not cloudConfig.winfo_exists():
         cloudConfig = CloudConfig(app)
-        cloudConfig.focus()
     else:
         cloudConfig.focus()
 
-buttonCloudConfig = customtkinter.CTkButton(master=app, text="Cloud Config", command=openCloudConfig)
-buttonCloudConfig.grid(row=6,column=3)
-
+btnCloudConfig = customtkinter.CTkButton(master=app, text="Cloud Config", command=openCloudConfig)
+btnCloudConfig.grid(row=6,column=3)
 
 # Add if in start button check that all cloud services are selected
 # Add progress bar 
 # Split STT.py to seperate files like STT TTS Translate or even more 
 # Check DeepL for translations and AssembleAI for Speech to Text
 
-
-buttonStart = customtkinter.CTkButton(master=app, text="Start", command=startBtn)
-buttonStart.grid(row=7,column=3)
+btnStart = customtkinter.CTkButton(master=app, text="Start", command=startBtn)
+btnStart.grid(row=8,column=3)
 
 
 app.mainloop()

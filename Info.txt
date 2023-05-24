@@ -5,6 +5,7 @@ pip install gTTS
 pip install pydub
 pip install librosa
 pip install customtkinter
+pip install pathlib
 
 
 https://pypi.org/project/youtube-transcript-api/
