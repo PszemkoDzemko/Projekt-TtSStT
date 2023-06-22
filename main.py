@@ -9,6 +9,8 @@ import TTS
 from tkinter import filedialog as fd
 from pydub import AudioSegment
 from threading import Thread
+import pafy
+from pytube import YouTube
 
 customtkinter.set_appearance_mode("System")
 customtkinter.set_default_color_theme("green")
@@ -33,6 +35,8 @@ serviceTTS = 'google'
 googleCloudID = ''
 azureAPIKey = ''
 azureRegion = ''
+newAudio = ''
+duration = ''
 
 # Custom tinker inicialization
 app = customtkinter.CTk()
@@ -41,7 +45,6 @@ app.title("TTSSTT")
 
 # Start function 
 def startBtn():
-    print('Button pressed')
     print(langSettings)
     print(originalLang)
     print(orgFilePath)
@@ -52,21 +55,34 @@ def startBtn():
     print(googleCloudID)
     print(azureAPIKey)
     print(azureRegion)
-    if langSettings == {}:
-        print('Brak języka')
-        return
-    if orgFilePath == '' and ytLink == '':
-        print('Brak linku/sciezki')
-        return
-    if serviceSTT == '':
-        print('brak stt')
-        return
-    if serviceTranslate == '':
-        print('brak translate')
-        return
-    if serviceTTS == '':
-        print('brak tts')
-        return
+
+    # UNCOMMENT LATER
+    # if langSettings == {}:
+    #     print('Brak języka')
+    #     return
+    # if orgFilePath == '' and ytLink == '':
+    #     print('Brak linku/sciezki')
+    #     return
+    # if serviceSTT == '':
+    #     print('brak stt')
+    #     return
+    # if serviceTranslate == '':
+    #     print('brak translate')
+    #     return
+    # if serviceTTS == '':
+    #     print('brak tts')
+    #     return
+
+    # If ytLink is not empty check if you can download SRT(subbtitles) file from youtube if not try to download whole video
+    # if whole video put it to orgFilePath so we can get audio from it
+
+    if(ytLink != ''):
+        #fileHelper.getTranscript(ytLink,langSettings)
+        yt = YouTube(ytLink)
+        duration = yt.length
+        print(yt.length)
+
+
     fileExtension = pathlib.Path(orgFilePath).suffix
     print(fileExtension)
     # If fileExtension == mp4 or av, and some more
@@ -80,6 +96,7 @@ def startBtn():
             audiofilePath = orgFilePath
         newAudio = AudioSegment.from_wav(audiofilePath)
         duration = newAudio.duration_seconds
+
     progressbar.set(0.2)
     # If fileExtension is alredy mp3 wav
     # Split audio to 1 min files when using google STT
@@ -126,6 +143,11 @@ def startBtn():
             print("podaj klucz api oraz region")
             return
     
+    if serviceTTS == 'google':
+        fileHelper.margeAudio(langSettings)
+    
+    fileHelper.lenghtCheck(langSettings,duration)
+    progressbar.set(1.0)
 
 # Choose original language
 def chooseOriginalLang(choice):
@@ -198,9 +220,9 @@ btnFilePath = customtkinter.CTkButton(master=app, text="Wybierz", command=select
 btnFilePath.grid(row=1,column=2)
 
 # Choose YT Video link
-labelYTLink = customtkinter.CTkLabel(master=app,text="Opcjonalnie podaj link do filmiku na Youtube.")
+labelYTLink = customtkinter.CTkLabel(master=app,text="Opcjonalnie podaj ID filmiku na Youtube.")
 labelYTLink.grid(row=2,column=0)
-entryYTLink = customtkinter.CTkEntry(master=app,placeholder_text='Podaj link do filmiku na YT',width=300)
+entryYTLink = customtkinter.CTkEntry(master=app,placeholder_text=' https://www.youtube.com/watch?v=ID',width=300)
 entryYTLink.grid(row=3,column=0)
 btnYTLink = customtkinter.CTkButton(master=app, text="Zapisz", command=takeYTLink)
 btnYTLink.grid(row=3,column=2)

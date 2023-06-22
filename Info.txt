@@ -6,8 +6,13 @@ pip install pydub
 pip install librosa
 pip install customtkinter
 pip install pathlib
+pip install pafy==0.3.42
+pip install youtube-transcript-api
+pip install threaded 
 
 
 https://pypi.org/project/youtube-transcript-api/
 https://stackoverflow.com/questions/66707266/unable-to-use-moviepy-library
 https://hub.packtpub.com/introducing-spleeter-tensorflow-python-library-extracts-voice-sound-from-music/
+https://pypi.org/project/pafy/0.3.42/
+https://stackoverflow.com/questions/33698776/how-can-i-get-the-duration-of-youtube-video-with-python
