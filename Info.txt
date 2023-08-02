@@ -16,3 +16,6 @@ https://stackoverflow.com/questions/66707266/unable-to-use-moviepy-library
 https://hub.packtpub.com/introducing-spleeter-tensorflow-python-library-extracts-voice-sound-from-music/
 https://pypi.org/project/pafy/0.3.42/
 https://stackoverflow.com/questions/33698776/how-can-i-get-the-duration-of-youtube-video-with-python
+https://youtube.com/shorts/ACuXn0EQfS0?feature=share
+https://youtube.com/shorts/MCzA3vFG6ag?feature=share
+https://librosa.org/librosa_gallery/auto_examples/plot_vocal_separation.html
